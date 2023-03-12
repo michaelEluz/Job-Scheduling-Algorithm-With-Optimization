@@ -241,7 +241,7 @@ namespace Job_Scheduling
                     if (action == 1)
                     {
                         Counter_Prop++;
-                        if (Counter_Prop % 500000 == 0)
+                        if (Counter_Prop % 100000 == 0)
                         {
                             Prop++;
                         }
