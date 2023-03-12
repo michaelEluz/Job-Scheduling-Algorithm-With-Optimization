@@ -1,18 +1,20 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Job_Schedualing
+namespace Job_Scheduling
 {
     class Program
     {
-        static List<int[,]> list = new List<int[,]>();
+        static List<int[,]> conformingToTheConsraintList = new List<int[,]>();
         static int NumOfWorkers = 5;
-        static int size = 7* NumOfWorkers;
-        static int prop = 1;
-        static int counter_prop = 1;
+        static int Size = 7* NumOfWorkers;
+        static int Prop = 1;
+        static int Counter_Prop = 1;
         static void Main(string[] args)
         {
             one_woker_per_shift();
@@ -21,12 +23,18 @@ namespace Job_Schedualing
         public static void one_woker_per_shift()
         {
             Random rand = new Random();
-            int[,] MainMatrix = BulidJobRequestsSimulator();
-            String jason = printMatrix(MainMatrix);
-            MatrixBuilder(MainMatrix, 0, 2);
-            Console.WriteLine("---------------------------------------------------recursion stop---------------------------------------------------");
+            int[,] EmploysRequestsMatrix = BulidJobRequestsSimulator();
+            Console.WriteLine("-------------------Creating Employ Requsets matrix from request simulator----------------------------");
+            Console.WriteLine("-------------------Text file in the folder explorer as'EmploysRequestsMatrix.txt'--------------------");
+
+            String jason = printMatrix(EmploysRequestsMatrix);
+            Console.SetOut(Console.Out);
+            Console.WriteLine("--------------------Creating matrices that Conforming to the constraint 'no morning after night'-----");
+
+            Create_Conforming_to_the_constraint_matrices(EmploysRequestsMatrix, 0, 2);
+            Console.WriteLine("--------------------Recursion stop- no more creating new matrices-------------------------------------");
             Console.WriteLine("\n\n\n\n");
-            Console.WriteLine("---------------------------------------------------Runnig the hungarian algorithm on all the matrices---------------");
+            Console.WriteLine("--------------------Runnig the hungarian algorithm on all the 'Conforming to the constraint matrices'-");
             Console.WriteLine("\n\n\n\n");
             
             try
@@ -35,19 +43,19 @@ namespace Job_Schedualing
                 ShowWeeklySchedule(chossen_matrix);
             }
             catch (InvalidOperationException e){
-                Console.WriteLine("-----------------------------------------The algorithm didn't found a schedule for the requests-------------");
+                Console.WriteLine("---------------The algorithm didn't found a schedule for the requests-----------------------------");
 
             }
 
         }
         public static int[] RunHungarianOnAllMatrices()
         {
-            int[] chossen_matrix = new int[size];
+            int[] chossen_matrix = new int[Size];
             int chossen_matrix_val = int.MaxValue;
             int listPos_counter = -1;
             int listPos = 0;
             int possibleSolutions = 0;
-            foreach (var matrix in list)
+            foreach (var matrix in conformingToTheConsraintList)
             {
                 listPos_counter++;
                 var algorithm = new HungarianAlgorithm(matrix);
@@ -69,10 +77,12 @@ namespace Job_Schedualing
             
             Console.WriteLine("-----------------------------------------------chossen matrix---------------------------------------------------");
             HungarianAlgorithm.printArray(chossen_matrix);
-            Console.WriteLine("total matrices:       " + list.Count);
-            Console.WriteLine("possible schedualing: " + possibleSolutions);
-            Console.WriteLine("matrix value:         " + chossen_matrix_val);
-            Console.WriteLine("matrix number :       " + listPos);
+            Console.WriteLine("Numbers of employs:           " + NumOfWorkers);
+            Console.WriteLine("Total created matrices:       " + conformingToTheConsraintList.Count);
+            Console.WriteLine("Possible scheduling:          " + possibleSolutions);
+            Console.WriteLine("Choosen matrix value:         " + chossen_matrix_val);
+            Console.WriteLine("Best score matrix possible:   " + 21);
+            Console.WriteLine("Choosen matrix number :       " + listPos);
             if (chossen_matrix_val == int.MaxValue)
             {
                 throw new InvalidOperationException("The algorithm didn't found a schedule for the requests");
@@ -83,11 +93,11 @@ namespace Job_Schedualing
         {
             Random rand = new Random();
             int index = 0;
-            int[,] MainMatrix = new int[size, size];
+            int[,] MainMatrix = new int[Size, Size];
 
-            for (int i = 0; i < size; i++)
+            for (int i = 0; i < Size; i++)
             {
-                for (int j = 0; j < size; j++)
+                for (int j = 0; j < Size; j++)
                 {
                     MainMatrix[i, j] = int.MaxValue;
                     if (j > 20)
@@ -96,7 +106,7 @@ namespace Job_Schedualing
             }
 
 
-            for (int i = 0; i < size; i++)
+            for (int i = 0; i < Size; i++)
             {
 
                 for (int j = 0; j < 21; j++)
@@ -141,15 +151,20 @@ namespace Job_Schedualing
 
         public static void ShowWeeklySchedule(int [] chossen_matrix)
         {
-            String[] workers = new String[size];
+            Console.WriteLine("\n\n-------Visualisation of the optimal schedule-------------\n\n");
+           
+
+
+
+            String[] workers = new String[Size];
             String[] m = new String[7];
             String[] e = new String[7];
             String[] n = new String[7];
             int worker_count = 7;
             int worker_index = 1;
-            String days = "Sunday".PadRight(15) + "Monday".PadRight(15) + "Tusday".PadRight(15)
-                + "Wensday".PadRight(15) + "Thursday".PadRight(15) + "Friday".PadRight(15) + "Saterday".PadRight(15);
-            Console.WriteLine("-----------------------------------------------");
+            String days = "Sunday".PadRight(15) + "Monday".PadRight(15) + "Tuesday".PadRight(15)
+                + "Wednesday".PadRight(15) + "Thursday".PadRight(15) + "Friday".PadRight(15) + "Saturday".PadRight(15);
+          
             Console.WriteLine(days);
             
 
@@ -208,10 +223,10 @@ namespace Job_Schedualing
 
             }
         }
-        public static void MatrixBuilder(int[,] m, int ii, int jj)
+        public static void Create_Conforming_to_the_constraint_matrices(int[,] m, int ii, int jj)
         {
 
-            for (int i = ii; i < size - 1; i++)
+            for (int i = ii; i < Size - 1; i++)
             {
                 if ((i + 1) % 7 == 0)
                     continue;
@@ -222,24 +237,73 @@ namespace Job_Schedualing
                     a[i, (i * 3 + 2) % 21] = int.MaxValue;
                     b[i + 1, (i * 3 + 2) % 21 + 1] = int.MaxValue;
                     Random rand = new Random();
-                    int action = rand.Next(1, prop);
+                    int action = rand.Next(1, Prop);
                     if (action == 1)
                     {
-                        counter_prop++;
-                        if (counter_prop % 10000 == 0)
+                        Counter_Prop++;
+                        if (Counter_Prop % 500000 == 0)
                         {
-                            prop++;
+                            Prop++;
                         }
 
-                        MatrixBuilder(a, i + 1, (i * 3 + 2) % 21 + 3);
-                        MatrixBuilder(b, i + 1, (i * 3 + 2) % 21 + 3);
+                        Create_Conforming_to_the_constraint_matrices(a, i + 1, (i * 3 + 2) % 21 + 3);
+                        Create_Conforming_to_the_constraint_matrices(b, i + 1, (i * 3 + 2) % 21 + 3);
 
                     }
                     return;
                 }
 
             }
-            list.Add(m);
+            conformingToTheConsraintList.Add(m);
+        }
+        public static String printMatrix(int[,] matrix)
+        {
+            int worker_counter=1;
+            String jason = "";
+            // Get the parent directory of the current directory (one level up)
+            string parentDirectory = Directory.GetParent(Directory.GetCurrentDirectory()).FullName;
+
+            // Get the parent directory of the parent directory (two levels up)
+            string grandParentDirectory = Directory.GetParent(parentDirectory).FullName;
+            // Combine the directory and file name to get the full path to the file
+            string filePath = Path.Combine(grandParentDirectory, "EmploysRequestsMatrix.txt");
+
+            // Write to the file using a using block to ensure proper disposal
+            using (StreamWriter writer = new StreamWriter(filePath))
+            {
+
+                writer.WriteLine("\n\n\n");
+                writer.WriteLine("------------------------------Main employs requests matrix-----------------------");
+                writer.WriteLine("\n\n");
+                jason += "{\n";
+                for (int i = 0; i < Size; i++)
+                {
+
+
+                    jason +="Worker"+worker_counter+ "-Day" + (i % 7 + 1) + ":[";
+                    jason += "[";
+                    for (int j = 0; j < 21; j++)
+                    {
+
+                        jason += matrix[i, j].ToString() + " ";
+
+                    }
+
+                    jason += "]\n";
+
+                    if ((i + 1) % 7==0)
+                    {
+                        worker_counter++;
+
+                    }
+                }
+                jason += "}";
+                writer.WriteLine("\n" + jason);
+            }
+            
+                 
+            return jason;
+
         }
         public sealed class HungarianAlgorithm
         {
@@ -510,35 +574,6 @@ namespace Job_Schedualing
                 }
                 return sum;
             }
-        }
-        public static String printMatrix(int[,] matrix)
-        {
-            Console.WriteLine("\n\n\n");
-            Console.WriteLine("------------------------------Main requests matrix-----------------------");
-            Console.WriteLine("\n\n");
-
-            String jason = "[";
-            for (int i = 0; i < size; i++)
-            {
-                jason += System.Environment.NewLine;
-                jason += "Day" + (i % 7 + 1) + ":[";
-                jason += "[";
-                for (int j = 0; j < matrix.GetLength(0); j++)
-                {
-
-                    jason += matrix[i, j].ToString().PadRight(5);
-
-                    if (j + 1 != matrix.GetLength(0))
-                        jason += ",";
-                }
-                jason += "]";
-                if (i + 1 != matrix.GetLength(0))
-                    jason += ",";
-            }
-            jason += "]";
-            Console.WriteLine(jason);
-            return jason;
-
         }
 
     }
