@@ -17,10 +17,10 @@ namespace Job_Scheduling
         static int Counter_Prop = 1;
         static void Main(string[] args)
         {
-            one_woker_per_shift();
+            FairSchedulingAlgorithm();
             return;
         }
-        public static void one_woker_per_shift()
+        public static void FairSchedulingAlgorithm()
         {
             Random rand = new Random();
             int[,] EmploysRequestsMatrix = BulidJobRequestsSimulator();
